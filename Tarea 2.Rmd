@@ -1,0 +1,239 @@
+---
+title: "Tarea 2"
+Name: "Francisco Vázquez Mendoza"
+date: "April"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 1
+    theme: cerulean
+---
+
+
+<style>
+body {
+text-align: justify}
+</style>
+
+<style type="text/css">
+body{/*Normal*/
+     font-size: 20px;
+}
+</style>
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(tidyverse)
+library(discrtr) # A companion package for the book Introduction to Discrete Choice Analysis with `R`
+library(mlogit) # Multinomial Logit Models
+library(readr) # Read Rectangular Text Data
+
+library(gplots) # Various R Programming Tools for Plotting Data
+library(ggmosaic) # Mosaic Plots in the 'ggplot2' Framework
+library(treemapify)
+library(ggridges)
+library(ggalluvial)
+library(plotly)
+```
+
+
+Call data set Car from package mlogit. Once you have loaded the data set, do the following:
+
+* How many variables are there in this data set and of which type (i.e., categorical/quantitative)?
+
+* Choose four relevant categorical variables from this data set and describe them using univariate, bivariate, and multivariate techniques. Discuss your results.
+
+* What ideas about individuals’ choices regarding car do you develop from this EDA exercise?
+
+
+Se carga el conjunto de datos, se muestran las variables y su tipo:
+
+```{r}
+data(Car)
+glimpse(Car)
+```
+
+```{r}
+str(Car)
+```
+
+
+
+En este caso es necesario añadir columnas acerca de la elección, las gráficas se realizarán con la data frame `new_car`:
+
+
+```{r}
+new_car <- Car
+choice_char <- gsub("choice","", new_car$choice)
+new_car <- new_car |> mutate(choice_char = choice_char)
+
+type <- vector("character", nrow(new_car))
+fuel <- vector("character", nrow(new_car))
+price <- vector("numeric", nrow(new_car))
+range <- vector("numeric", nrow(new_car))
+acc <- vector("numeric", nrow(new_car))
+speed <- vector("numeric", nrow(new_car))
+pollution <- vector("numeric", nrow(new_car))
+size <- vector("numeric", nrow(new_car))
+space <- vector("numeric", nrow(new_car))
+cost <- vector("numeric", nrow(new_car))
+station <- vector("numeric", nrow(new_car))
+for (i in 1:nrow(new_car)) {
+  type[i] <- as.character(new_car[i, paste0("type", new_car$choice_char[i], collapse = "")])
+  fuel[i] <- as.character(new_car[i, paste0("fuel", new_car$choice_char[i], collapse = "")])
+  price[i] <- new_car[i, paste0("price", new_car$choice_char[i], collapse = "")]
+  range[i] <- new_car[i, paste0("range", new_car$choice_char[i], collapse = "")]
+  acc[i] <- new_car[i, paste0("acc", new_car$choice_char[i], collapse = "")]
+  speed[i] <- new_car[i, paste0("speed", new_car$choice_char[i], collapse = "")]
+  pollution[i] <- new_car[i, paste0("pollution", new_car$choice_char[i], collapse = "")]
+  size[i] <- new_car[i, paste0("size", new_car$choice_char[i], collapse = "")]
+  space[i] <- new_car[i, paste0("space", new_car$choice_char[i], collapse = "")]
+  cost[i] <- new_car[i, paste0("cost", new_car$choice_char[i], collapse = "")]
+  station[i] <- new_car[i, paste0("station", new_car$choice_char[i], collapse = "")]
+}
+
+new_car <- new_car |> mutate(choice_num= factor(choice_char), type=type, fuel=fuel, price=price, range=range,
+                             acc=acc, speed=speed, pollution=pollution, size=size, space=space, cost=cost,
+                             station=station)
+
+new_car$type <- factor(new_car$type, levels = levels(new_car$type1))
+new_car$fuel <- factor(new_car$fuel, levels = levels(new_car$fuel1))
+```
+
+
+```{r}
+summary(new_car)
+```
+
+**Se eligen 4 variables categóricas relevantes y se describen utilizando técnicas univariantes, bivariantes y multivariantes. Discuta sus resultados.**
+
+*Univariado*
+*Choice*
+
+```{r}
+new_car %>% group_by(choice_num) %>% summarise(n = n()) %>% ggplot(aes(fill = choice_num, area = n)) + geom_treemap() + labs(title = "Frequency of choice", fill = "Choice")
+```
+Discusión: Esta distribución muestra que las 3 opciones preferidas por los usuarios son (por orden de frecuencia): la 5, 3 y 1.
+
+
+
+```{r}
+new_car %>% group_by(type) %>% summarise(n = n()) %>% ggplot(aes(fill = type, area = n)) + geom_treemap() + labs(title = "Frequency of vehicle type", fill = "Type")
+```
+
+
+
+```{r}
+new_car %>% group_by(fuel) %>% summarise(n = n()) %>% ggplot(aes(fill = fuel, area = n)) + geom_treemap() + labs(title = "Frequency of vehicle fuel", fill = "Fuel")
+```
+
+
+
+```{r}
+new_car %>% group_by(cost) %>% summarise(n = n()) %>% ggplot(aes(fill = cost, area = n)) + geom_treemap() + labs(title = "Cost per mile of travel", fill = "Cost")
+```
+
+*Técnica bivariante*
+
+
+```{r}
+
+new_car %>% ggplot(aes(x = type, y = choice_num, fill = choice)) +
+  geom_density_ridges(jittered_points = TRUE,
+                      bandwidth = 3.5,
+                      position = position_points_jitter(width = 0.05, height = 0),
+                      point_shape = '|', 
+                      point_size = 3,
+                      point_alpha = 1,
+                      alpha = 0.7) +
+  labs(y = "Choice", x = "Type of vehicle", fill = "Choice")
+
+```
+
+Alternativa de gráfico (más adecuado?)
+
+```{r}
+
+new_car %>%
+ggplot(aes(x = type,
+fill = choice_num)) +
+geom_bar(position = "fill") +
+labs(y = "Proportion",
+x = "Type of vehicle",
+fill="Choice")
+
+```
+
+*Técnica bivariante*
+
+
+```{r}
+
+new_car %>%
+ggplot(aes(x = fuel,
+fill = choice_num)) +
+geom_bar(position = "fill") +
+labs(y = "Proportion",
+x = "Fuel",
+fill="Choice")
+
+```
+
+*Técnica bivariante*
+*Choice - Cost*
+
+```{r}
+
+new_car %>%
+ggplot(aes(x = cost,
+fill = choice_num)) +
+geom_bar(position = "fill") +
+labs(y = "Proportion",
+x = "Cost",
+fill="Choice")
+
+```
+
+*Técnica multivariante*
+
+
+```{r}
+
+# data preparation
+new_car_alluvia <- new_car %>%
+  select(fuel, type, choice_num) %>%
+  group_by(fuel, type, choice_num) %>%
+  summarize(frequency = n(),
+            .groups = "drop")
+
+```
+
+
+```{r}
+
+new_car_alluvia %>% 
+  ggplot(aes(y = frequency, 
+             axis1 = type,
+             axis2 = fuel,
+             axis4 = choice_num)) +
+  geom_alluvium(aes(fill = fuel),
+                width = 1/12,
+                color = "black") +
+  geom_stratum(width = 1/3,
+               fill = "black",
+               color = "yellow") +
+  geom_text(stat = "stratum",
+            aes(label = after_stat(stratum)),
+            color = "green",
+            size = 3) +
+  scale_x_discrete(limits = c("Fuel", "Type",
+                              "Choice"),
+                   expand = c(.05, .05)) +
+  scale_fill_brewer(type = "qual",
+                    palette = "Set1") +
+  theme_minimal()
+
+```
