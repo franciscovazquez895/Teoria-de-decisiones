@@ -1,0 +1,122 @@
+---
+title: "Capitulo 1"
+name: "Francisco Vázquez"
+date: "March"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 1
+    theme: cerulean
+---
+
+```{=html}
+<style>
+body {
+text-align: justify}
+</style>
+```
+
+```{=html}
+<style type="text/css">
+body{/*Normal*/
+     font-size: 20px;
+}
+</style>
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(tidyverse)
+library(discrtr) # A companion package for the book Introduction to Discrete Choice Analysis with `R`
+library(mlogit) # Multinomial Logit Models
+library(readr) # Read Rectangular Text Data
+library(plotly)
+```
+
+
+Invocar el modo de conjunto de datos desde el paquete mlogit. Para ello, primero debe cargar el paquete. Se trata de un conjunto de datos con opciones sobre el modo de transporte. Esto se hace de la siguiente manera
+
+```{r}
+data("Mode")
+```
+
+
+
+Una vez que haya cargado el conjunto de datos, responda a las siguientes preguntas: Describa este conjunto de datos. ¿Cuántas variables hay y de qué tipo (es decir, categóricas/cuantitativas)?
+
+```{r}
+glimpse(Mode)
+```
+**La variable choice es categórica mientras que las otras son cuantitativas**
+
+
+
+Cuántos modos de transporte diferentes hay en este conjunto de datos? ¿Cuál es el modo más popular? ¿Cuál es el modo menos popular?
+
+```{r}
+summary(Mode)
+```
+**Hay 4 modos de transporte (car, carpool, bus, rail) de los cuáles el más popular es el automóvil (car) con 218 observaciones y el menos popular es el coche compartido (carpool) con 32 observaciones**
+
+```{r}
+ggplot(Mode)+
+  geom_bar(aes(choice, fill=choice), color="red", show.legend = FALSE)+
+  theme_bw()
+```
+
+
+(En general, ¿cual es el modo más caro? ¿La menos cara? )
+
+```{r}
+ggplot(Mode)+
+  geom_density(aes(cost.car, fill="car"), color="black", alpha=0.5)+
+  geom_density(aes(cost.carpool , fill="carpool"), color="black", alpha=0.5)+
+  geom_density(aes(cost.bus, fill="bus"), color="black", alpha=0.5)+
+  geom_density(aes(cost.rail, fill="rail"), color="black", alpha=0.5)+
+  scale_fill_manual(values=c("car"= "red", "carpool"="blue", "bus"="gold", "rail"="blue"), name="Mode")+
+  xlab("Cost")+
+theme_bw()
+  
+```
+**El modo de transporte más caro es el automóvil mientras que el modo de transporte más barato es el carpool**
+
+Create a plot showing the univariate distributions of time by car and time by bus. Discuss.
+
+(Crea un gráfico que muestre las distribuciones univariantes del tiempo en coche y el tiempo en autobús. Discute)
+
+```{r}
+grafica_time <- ggplot(Mode)+
+  geom_density(aes(time.car, fill="car"), color="black", alpha=0.5)+
+  geom_density(aes(time.carpool , fill="carpool"), color="black", alpha=0.5)+
+  geom_density(aes(time.bus, fill="bus"), color="black", alpha=0.5)+
+  geom_density(aes(time.rail, fill="rail"), color="black", alpha=0.5)+
+  scale_fill_manual(values=c("car"= "yellow", "carpool"="blue", "bus"="gold", "rail"="cyan"), name="Mode")+
+  xlab("Time")+
+theme_bw()
+
+
+ggplotly(grafica_time)  
+```
+**El automóvil es más rápido mientras que el autobús o el tren tienen riesgo de poder demorarse más tiempo**
+
+(¿Cómo se relacionan las opciones con el coste de los distintos modos?)
+
+```{r}
+varnum <- Mode |> dplyr::select(where(is.numeric))
+varnum <- names(varnum)
+
+for (var in varnum) {
+grafica_box <- ggplot(Mode)+
+  geom_boxplot(aes(choice, eval(as.name(var)), fill=choice), show.legend=FALSE)+
+  ylab(var)+
+  theme_bw()
+  
+  print(grafica_box)
+    
+}
+
+
+
+```
+**Se prefiere el carpool y bus por que tienen costos más baratos,  a tiempo el automóvil es más rápido pero también es más caro**
